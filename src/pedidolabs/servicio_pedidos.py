@@ -6,46 +6,55 @@ from .pagos import PayFastAPI, cobrar_con_payfast
 from .notificaciones import enviar_email_confirmacion, enviar_email_pago
 from .repositorio import RepositorioArchivo
 from .facturacion import generar_factura
+from .dto import ProcesarPedidoDTO
 
 class ServicioPedidos:
 
-    def __init__(self, inventario, ruta_pedidos="pedidos.jsonl"):
+    def __init__(self, inventario, ruta_pedidos="pedidos.jsonl", cobrar=None):
         self.inventario = inventario
         self.ruta_pedidos = ruta_pedidos
-        self.payfast = PayFastAPI()
+        payfast = PayFastAPI()
+        self.cobrar = cobrar or (
+            lambda numero_tarjeta, monto: cobrar_con_payfast(payfast, numero_tarjeta, monto)
+        )
         self.ultima_factura = None
         self.ultimos_puntos = 0
-
-    def procesar_pedido(
-        self, pedido_id, documento, nombre, email, telefono, tipo_cliente,
-        calle, ciudad, departamento, codigo_postal, items, numero_tarjeta,
-        enviar_confirmacion=True,
-    ):
+    
+    def crear_cliente_pedido(self, dto: ProcesarPedidoDTO):
         cliente = Cliente(
-            documento, nombre, email, telefono, tipo_cliente,
-            calle, ciudad, departamento, codigo_postal,
+            dto.documento, dto.nombre, dto.email, dto.telefono, dto.tipo_cliente,
+            dto.calle, dto.ciudad, dto.departamento, dto.codigo_postal,
         )
         pedido = Pedido(
-            pedido_id, cliente, calle, ciudad, departamento, codigo_postal
+            dto.pedido_id, cliente, dto.calle, dto.ciudad, dto.departamento,
+            dto.codigo_postal,
         )
-        if not items:
-            raise ValueError("El pedido debe contener al menos un producto")
+        return cliente, pedido
 
+    def _validar_stock(self, items):
         for producto, cantidad in items:
             self.inventario.validar_disponibilidad(producto.codigo, cantidad)
+
+    def _agregar_items(self, pedido, items):
+        for producto, cantidad in items:
             pedido.agregar_item(producto, cantidad)
 
-        subtotal = 0.0
-        for item in pedido.items:
-            subtotal += item.producto.precio * item.cantidad
+    def procesar_pedido(self, dto: ProcesarPedidoDTO):
+
+        if not dto.items:
+            raise ValueError("El pedido debe contener al menos un producto")
+
+        self._validar_stock(dto.items)
+        cliente, pedido = self.crear_cliente_pedido(dto);
+        self._agregar_items(pedido, dto.items)
+
+        subtotal = pedido.subtotal()
 
         descuento = calcular_descuento(cliente, subtotal)
         envio = calcular_costo_envio(pedido, modalidad="ESTANDAR")
         total = subtotal - descuento + envio
 
-        transaccion_id = cobrar_con_payfast(
-            self.payfast, numero_tarjeta=numero_tarjeta, monto=total
-        )
+        transaccion_id = self.cobrar(dto.numero_tarjeta, total)
 
         for item in pedido.items:
             self.inventario.reservar(item.producto.codigo, item.cantidad)
@@ -61,7 +70,7 @@ class ServicioPedidos:
         self.ultimos_puntos = calcular_beneficio_fidelidad(cliente, total)
 
         enviar_email_pago(cliente, pedido.id, transaccion_id, total)
-        if enviar_confirmacion:
+        if dto.enviar_confirmacion:
             enviar_email_confirmacion(cliente, pedido.id, total)
         return pedido
 
