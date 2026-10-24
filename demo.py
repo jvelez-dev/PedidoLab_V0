@@ -2,6 +2,7 @@ from pathlib import Path
 from src.pedidolabs.producto import Producto
 from src.pedidolabs.inventario import Inventario
 from src.pedidolabs.servicio_pedidos import ServicioPedidos
+from src.pedidolabs.repositorio import RepositorioArchivo
 from src.pedidolabs.notificaciones import MENSAJES_ENVIADOS, limpiar_bandeja
 
 def main():
@@ -14,7 +15,7 @@ def main():
     if ruta.exists():
         ruta.unlink()
 
-    servicio = ServicioPedidos(inventario, ruta)
+    servicio = ServicioPedidos(inventario, RepositorioArchivo(ruta))
     pedido = servicio.procesar_pedido(
         "PED-001", "123", "Ana", "ana@example.com", "3000000000",
         "PREMIUM", "Cra 23 #45-67", "Manizales", "Caldas", "170001",

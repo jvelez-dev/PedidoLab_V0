@@ -7,7 +7,8 @@ from pedidolabs.notificaciones import MENSAJES_ENVIADOS, limpiar_bandeja
 
 def crear_servicio(tmp_path):
     inventario = Inventario({"A": 10})
-    return ServicioPedidos(inventario, tmp_path / "pedidos.jsonl"), inventario
+    repositorio = RepositorioArchivo(tmp_path / "pedidos.jsonl")
+    return ServicioPedidos(inventario, repositorio), inventario
 
 def args_base(prod):
     return (

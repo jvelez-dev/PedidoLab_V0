@@ -4,14 +4,13 @@ from .precios import calcular_descuento, calcular_beneficio_fidelidad
 from .envios import calcular_costo_envio
 from .pagos import PayFastAPI, cobrar_con_payfast
 from .notificaciones import enviar_email_confirmacion, enviar_email_pago
-from .repositorio import RepositorioArchivo
 from .facturacion import generar_factura
 
 class ServicioPedidos:
 
-    def __init__(self, inventario, ruta_pedidos="pedidos.jsonl"):
+    def __init__(self, inventario, repositorio):
         self.inventario = inventario
-        self.ruta_pedidos = ruta_pedidos
+        self.repositorio = repositorio
         self.payfast = PayFastAPI()
         self.ultima_factura = None
         self.ultimos_puntos = 0
@@ -54,8 +53,7 @@ class ServicioPedidos:
         pedido.transaccion_id = transaccion_id
         pedido.total_pagado = total
 
-        repo = RepositorioArchivo(self.ruta_pedidos)
-        repo.guardar(pedido)
+        self.repositorio.guardar(pedido)
 
         self.ultima_factura = generar_factura(pedido, subtotal, descuento, envio)
         self.ultimos_puntos = calcular_beneficio_fidelidad(cliente, total)
