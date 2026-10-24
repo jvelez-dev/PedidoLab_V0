@@ -22,16 +22,18 @@ def calcular_base_domicilio(pedido):
         base = 18_000.0
     return base
 
+def calcular_subtotal(pedido):
+    subtotal = 0.0
+    for item in pedido.items:
+        subtotal += item.producto.precio * item.cantidad
+    return subtotal
+
 
 def calcular_costo_envio(pedido, modalidad=ModalidadEnvio.ESTANDAR):
     if modalidad not in ModalidadEnvio and modalidad != ModalidadEnvio.ESTANDAR.value:
         raise ValueError("Modalidad de envío no soportada")
 
-    subtotal = (
-        pedido.subtotal()
-        if hasattr(pedido, "subtotal")
-        else sum(item.producto.precio * item.cantidad for item in pedido.items)
-    )
+    subtotal = calcular_subtotal(pedido)
     if subtotal >= 700_000 and pedido.cliente.tipo in ("PREMIUM", "CORPORATIVO"):
         return 0.0
 
