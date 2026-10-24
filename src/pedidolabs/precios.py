@@ -1,28 +1,22 @@
-def calcular_descuento(cliente, subtotal):
-    if cliente.tipo == "NORMAL":
-        return 0.0
+def _porcentaje_descuento(cliente, subtotal):
     if cliente.tipo == "PREMIUM":
         if subtotal >= 500_000:
-            return subtotal * 0.15
-        return subtotal * 0.10
+            return 0.15
+        return 0.10
     if cliente.tipo == "CORPORATIVO":
         if subtotal >= 1_000_000:
-            return subtotal * 0.20
-        return subtotal * 0.12
+            return 0.20
+        return 0.12
     return 0.0
 
+def calcular_descuento(cliente, subtotal):
+    return subtotal * _porcentaje_descuento(cliente, subtotal)
+
 def descripcion_descuento(cliente, subtotal):
-    if cliente.tipo == "NORMAL":
+    porcentaje = _porcentaje_descuento(cliente, subtotal)
+    if porcentaje == 0:
         return "Sin descuento"
-    if cliente.tipo == "PREMIUM":
-        if subtotal >= 500_000:
-            return "Cliente PREMIUM: 15%"
-        return "Cliente PREMIUM: 10%"
-    if cliente.tipo == "CORPORATIVO":
-        if subtotal >= 1_000_000:
-            return "Cliente CORPORATIVO: 20%"
-        return "Cliente CORPORATIVO: 12%"
-    return "Sin descuento"
+    return f"Cliente {cliente.tipo}: {round(porcentaje * 100)}%"
 
 def calcular_beneficio_fidelidad(cliente, total):
     if cliente.tipo == "NORMAL":
