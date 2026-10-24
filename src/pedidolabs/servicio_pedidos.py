@@ -16,6 +16,19 @@ class ServicioPedidos:
         self.ultima_factura = None
         self.ultimos_puntos = 0
 
+    def _crear_pedido(self, pedido_id, cliente, items):
+        pedido = Pedido(
+            pedido_id, cliente, cliente.calle, cliente.ciudad,
+            cliente.departamento, cliente.codigo_postal,
+        )
+        if not items:
+            raise ValueError("El pedido debe contener al menos un producto")
+        for producto, cantidad in items:
+            self.inventario.validar_disponibilidad(producto.codigo, cantidad)
+            pedido.agregar_item(producto, cantidad)
+        return pedido
+
+
     def procesar_pedido(
         self, pedido_id, documento, nombre, email, telefono, tipo_cliente,
         calle, ciudad, departamento, codigo_postal, items, numero_tarjeta,
@@ -25,15 +38,16 @@ class ServicioPedidos:
             documento, nombre, email, telefono, tipo_cliente,
             calle, ciudad, departamento, codigo_postal,
         )
-        pedido = Pedido(
-            pedido_id, cliente, calle, ciudad, departamento, codigo_postal
-        )
-        if not items:
-            raise ValueError("El pedido debe contener al menos un producto")
+        pedido = self._crear_pedido(pedido_id, cliente, items)
+        # pedido = Pedido(
+        #     pedido_id, cliente, calle, ciudad, departamento, codigo_postal
+        # )
+        # if not items:
+        #     raise ValueError("El pedido debe contener al menos un producto")
 
-        for producto, cantidad in items:
-            self.inventario.validar_disponibilidad(producto.codigo, cantidad)
-            pedido.agregar_item(producto, cantidad)
+        # for producto, cantidad in items:
+        #     self.inventario.validar_disponibilidad(producto.codigo, cantidad)
+        #     pedido.agregar_item(producto, cantidad)
 
         
         resumen_pedido = self.calcular_resumen(pedido)
