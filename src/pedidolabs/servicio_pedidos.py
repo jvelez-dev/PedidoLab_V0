@@ -28,6 +28,17 @@ class ServicioPedidos:
             pedido.agregar_item(producto, cantidad)
         return pedido
 
+    def _reservar_inventario(self, pedido):
+        for item in pedido.items:
+            self.inventario.reservar(item.producto.codigo, item.cantidad)
+
+    def _confirmar(self, pedido, transaccion_id, total):
+        pedido.estado = "CONFIRMADO"
+        pedido.transaccion_id = transaccion_id
+        pedido.total_pagado = total
+        repo = RepositorioArchivo(self.ruta_pedidos)
+        repo.guardar(pedido)
+
 
     def procesar_pedido(
         self, pedido_id, documento, nombre, email, telefono, tipo_cliente,
@@ -38,18 +49,7 @@ class ServicioPedidos:
             documento, nombre, email, telefono, tipo_cliente,
             calle, ciudad, departamento, codigo_postal,
         )
-        pedido = self._crear_pedido(pedido_id, cliente, items)
-        # pedido = Pedido(
-        #     pedido_id, cliente, calle, ciudad, departamento, codigo_postal
-        # )
-        # if not items:
-        #     raise ValueError("El pedido debe contener al menos un producto")
-
-        # for producto, cantidad in items:
-        #     self.inventario.validar_disponibilidad(producto.codigo, cantidad)
-        #     pedido.agregar_item(producto, cantidad)
-
-        
+        pedido = self._crear_pedido(pedido_id, cliente, items)        
         resumen_pedido = self.calcular_resumen(pedido)
         subtotal = resumen_pedido["subtotal"]
         descuento = resumen_pedido["descuento"]
@@ -60,16 +60,8 @@ class ServicioPedidos:
             self.payfast, numero_tarjeta=numero_tarjeta, monto=total
         )
 
-        for item in pedido.items:
-            self.inventario.reservar(item.producto.codigo, item.cantidad)
-
-        pedido.estado = "CONFIRMADO"
-        pedido.transaccion_id = transaccion_id
-        pedido.total_pagado = total
-
-        repo = RepositorioArchivo(self.ruta_pedidos)
-        repo.guardar(pedido)
-
+        self._reservar_inventario(pedido)
+        self._confirmar(pedido, transaccion_id, total)
         self.ultima_factura = generar_factura(pedido, subtotal, descuento, envio)
         self.ultimos_puntos = calcular_beneficio_fidelidad(cliente, total)
 
