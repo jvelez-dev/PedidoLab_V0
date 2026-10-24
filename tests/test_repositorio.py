@@ -1,5 +1,5 @@
 from pedidolabs.pedido import Pedido
-from pedidolabs.repositorio import RepositorioArchivo, guardar_pedido_confirmado
+from pedidolabs.repositorio import RepositorioArchivo
 
 def test_guardar_y_listar(tmp_path, cliente_normal, producto_a):
     p = Pedido("P1", cliente_normal, "x", "Manizales", "Caldas", "170001")
@@ -15,9 +15,3 @@ def test_guardar_y_listar(tmp_path, cliente_normal, producto_a):
 
 def test_listar_vacio(tmp_path):
     assert RepositorioArchivo(tmp_path / "x.jsonl").listar() == []
-
-def test_funcion_conveniencia(tmp_path, cliente_normal):
-    p = Pedido("P2", cliente_normal, "x", "Manizales", "Caldas", "170001")
-    p.estado = "CONFIRMADO"
-    guardar_pedido_confirmado(p, tmp_path / "x.jsonl")
-    assert RepositorioArchivo(tmp_path / "x.jsonl").listar()[0]["id"] == "P2"

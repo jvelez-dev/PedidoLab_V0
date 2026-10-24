@@ -35,7 +35,3 @@ class RepositorioArchivo:
                 if linea:
                     registros.append(json.loads(linea))
         return registros
-
-def guardar_pedido_confirmado(pedido, ruta="pedidos.jsonl"):
-    repo = RepositorioArchivo(ruta)
-    repo.guardar(pedido)
