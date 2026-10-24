@@ -3,6 +3,7 @@ from src.pedidolabs.producto import Producto
 from src.pedidolabs.inventario import Inventario
 from src.pedidolabs.servicio_pedidos import ServicioPedidos
 from src.pedidolabs.notificaciones import MENSAJES_ENVIADOS, limpiar_bandeja
+from src.pedidolabs.dto import ProcesarPedidoDTO
 
 def main():
     limpiar_bandeja()
@@ -15,11 +16,11 @@ def main():
         ruta.unlink()
 
     servicio = ServicioPedidos(inventario, ruta)
-    pedido = servicio.procesar_pedido(
+    pedido = servicio.procesar_pedido(ProcesarPedidoDTO(
         "PED-001", "123", "Ana", "ana@example.com", "3000000000",
         "PREMIUM", "Cra 23 #45-67", "Manizales", "Caldas", "170001",
         [(teclado, 2), (mouse, 1)], "4111111111111111"
-    )
+    ))
 
     print("Pedido:", pedido.id, pedido.estado)
     print("Total:", pedido.total_pagado)
