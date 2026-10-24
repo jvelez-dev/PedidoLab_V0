@@ -35,13 +35,12 @@ class ServicioPedidos:
             self.inventario.validar_disponibilidad(producto.codigo, cantidad)
             pedido.agregar_item(producto, cantidad)
 
-        subtotal = 0.0
-        for item in pedido.items:
-            subtotal += item.producto.precio * item.cantidad
-
-        descuento = calcular_descuento(cliente, subtotal)
-        envio = calcular_costo_envio(pedido, modalidad="ESTANDAR")
-        total = subtotal - descuento + envio
+        
+        resumen_pedido = self.calcular_resumen(pedido)
+        subtotal = resumen_pedido["subtotal"]
+        descuento = resumen_pedido["descuento"]
+        envio = resumen_pedido["envio"]
+        total = resumen_pedido["total"]
 
         transaccion_id = cobrar_con_payfast(
             self.payfast, numero_tarjeta=numero_tarjeta, monto=total
